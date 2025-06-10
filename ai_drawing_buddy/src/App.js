@@ -4,13 +4,18 @@ import { FaUndo, FaSave, FaMagic, FaEraser, FaTrash } from "react-icons/fa";
 
 function App() {
   const canvasRef = useRef();
+  const toolbarRef = useRef();
   const [strokeColor, setStrokeColor] = useState("#000");
   const [strokeWidth, setStrokeWidth] = useState(6);
-  const [dimensions, setDimensions] = useState({ width: 400, height: 400 });
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const updateDimensions = () => {
-      setDimensions({ width: window.innerWidth, height: window.innerHeight });
+      const toolbarHeight = toolbarRef.current?.offsetHeight || 180;
+      setDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight - toolbarHeight,
+      });
     };
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
@@ -19,17 +24,11 @@ function App() {
 
   const handleExport = async () => {
     const imageData = await canvasRef.current.exportImage("png");
-    console.log("Exported Image:", imageData); // Send to AI or save
+    console.log("Exported Image:", imageData); // Hook AI here
   };
 
-  const handleUndo = () => {
-    canvasRef.current.undo();
-  };
-
-  const handleClear = () => {
-    canvasRef.current.clearCanvas();
-  };
-
+  const handleUndo = () => canvasRef.current.undo();
+  const handleClear = () => canvasRef.current.clearCanvas();
   const handleSave = async () => {
     const imageData = await canvasRef.current.exportImage("png");
     const link = document.createElement("a");
@@ -37,14 +36,13 @@ function App() {
     link.download = "drawing.png";
     link.click();
   };
-
   const setEraser = () => {
     setStrokeColor("#fff");
     setStrokeWidth(20);
   };
 
   return (
-    <div style={{ backgroundColor: "#fff8f0", height: "100vh", overflow: "hidden" }}>
+    <div style={{ backgroundColor: "#fff8f0", height: "100%", minHeight: "100vh", overflow: "hidden" }}>
       <ReactSketchCanvas
         ref={canvasRef}
         strokeColor={strokeColor}
@@ -52,38 +50,50 @@ function App() {
         width={`${dimensions.width}px`}
         height={`${dimensions.height}px`}
         strokeWidth={strokeWidth}
+        style={{ display: "block", margin: "0 auto" }}
       />
 
-      {/* Bottom controls */}
-      <div style={{
-        position: "absolute",
-        bottom: "0",
-        width: "100%",
-        padding: "12px 0",
-        backgroundColor: "#fdfdfd",
-        boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: "24px",
-      }}>
-        {/* Row 1: Colors & thickness */}
-        <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-          {["#000", "#f00", "#0a0", "#00f", "#ffa500", "#ff69b4", "#00ced1"].map(color => (
+      {/* Bottom toolbar */}
+      <div
+        ref={toolbarRef}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          width: "100%",
+          backgroundColor: "#fdfdfd",
+          boxShadow: "0 -4px 12px rgba(0,0,0,0.1)",
+          padding: "12px 8px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "20px",
+          zIndex: 10,
+        }}
+      >
+        {/* Row 1: Colors and Crayon Sizes */}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: "10px",
+          }}
+        >
+          {["#000", "#f00", "#0a0", "#00f", "#ffa500", "#ff69b4", "#00ced1"].map((color) => (
             <div
               key={color}
               onClick={() => setStrokeColor(color)}
               style={{
                 backgroundColor: color,
-                width: "30px",
-                height: "30px",
+                width: "28px",
+                height: "28px",
                 borderRadius: "50%",
                 border: strokeColor === color ? "3px solid #333" : "2px solid #aaa",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
             />
           ))}
-          {[6, 12, 20].map(size => (
+          {[6, 12, 20].map((size) => (
             <div
               key={size}
               onClick={() => setStrokeWidth(size)}
@@ -93,27 +103,33 @@ function App() {
                 borderRadius: "50%",
                 backgroundColor: "#888",
                 border: strokeWidth === size ? "3px solid #444" : "2px solid #ccc",
-                cursor: "pointer"
+                cursor: "pointer",
               }}
               title={`Size ${size}`}
             />
           ))}
         </div>
 
-        {/* Row 2: Tools */}
-        <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-          <ToolButton icon={<FaUndo />} color="#00bcd4" onClick={handleUndo} label="Undo" />
-          <ToolButton icon={<FaEraser />} color="#ff9800" onClick={setEraser} label="Eraser" />
-          <ToolButton icon={<FaTrash />} color="#e53935" onClick={handleClear} label="Clear" />
-          <ToolButton icon={<FaSave />} color="#4caf50" onClick={handleSave} label="Save" />
-          <ToolButton icon={<FaMagic />} color="#9c27b0" onClick={handleExport} label="Enhance" />
+        {/* Row 2: Tool Buttons */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "16px",
+          }}
+        >
+          <ToolButton icon={<FaUndo />} color="#00bcd4" onClick={handleUndo} />
+          <ToolButton icon={<FaTrash />} color="#e53935" onClick={handleClear} />
+          <ToolButton icon={<FaEraser />} color="#ff9800" onClick={setEraser} />
+          <ToolButton icon={<FaSave />} color="#4caf50" onClick={handleSave} />
+          <ToolButton icon={<FaMagic />} color="#9c27b0" onClick={handleExport} />
         </div>
       </div>
     </div>
   );
 }
 
-const ToolButton = ({ icon, color, onClick, label }) => (
+const ToolButton = ({ icon, color, onClick }) => (
   <button
     onClick={onClick}
     style={{
@@ -130,7 +146,6 @@ const ToolButton = ({ icon, color, onClick, label }) => (
       cursor: "pointer",
       boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
     }}
-    title={label}
   >
     {icon}
   </button>
