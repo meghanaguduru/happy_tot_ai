@@ -137,12 +137,12 @@ const ToolButton = ({ icon, color, onClick }) => (
       color: "#fff",
       border: "none",
       borderRadius: "50%",
-      width: "48px",
-      height: "48px",
+      width: "56px", // Increased size
+      height: "56px",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "22px",
+      fontSize: "28px", // Increased from 22px
       cursor: "pointer",
       boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
     }}
